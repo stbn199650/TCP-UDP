@@ -115,13 +115,12 @@ int function(char *argv[]){
         
         //Wait for client
         client_addr_size = sizeof(client_addr);
-        printf("Ready to sendfile\n");
         new_sockfd = accept(sockfd, (struct sockaddr *)&client_addr,&client_addr_size);
         if(new_sockfd < 0){
             printf("Accept Error\n");
             exit(1);
         }
-        printf("Accept Success"); 
+        printf("Accept Success\n\n"); 
 
         //Send file size first
         n = write(new_sockfd,&total_filesize,sizeof(double));
@@ -129,7 +128,6 @@ int function(char *argv[]){
             printf("Send file size Error\n");
             exit(1);
         }
-        printf("Send file size Success\n");
 
         t_start = clock();  //time begin to send
         //send file
@@ -188,7 +186,6 @@ int function(char *argv[]){
     }
     /*---------------------tcp recv---------------------*/
     else if(strcmp(argv[1],"tcp")==0 && strcmp(argv[2],"recv")==0){
-        printf("tcp recv\n");
         
         //TCP socket
         sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -196,7 +193,7 @@ int function(char *argv[]){
 		    printf("ERROR opening socket.\n\n");
 		    exit(1);
     	}
-        printf("create socket success\n");
+        printf("Create Socket Success\n");
         
         //set address
         bzero((char *)&serv_addr,sizeof(serv_addr));
@@ -208,10 +205,10 @@ int function(char *argv[]){
         //connect
         n = connect(sockfd, (struct sockaddr *)&serv_addr,sizeof(serv_addr));
         if(n < 0){
-            printf("connect() Failed\n");
+            printf("Connect Failed\n");
             exit(1);
         }
-        printf("connect() success\n");
+        printf("Connect Success\n\n");
         
         //open file
         fp = fopen(file_name,"wb");
@@ -226,7 +223,7 @@ int function(char *argv[]){
             printf("Read error\n");
             exit(1);
         }
-        printf("file size: %lf\n",total_filesize);
+        printf("FILE Size: %.2lf  bytes\n\n",total_filesize);
 
         //start receiving
         while(count < total_filesize){
