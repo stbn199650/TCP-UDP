@@ -187,8 +187,10 @@ int function(char *argv[]){
         }
         t_end = clock();  //time end of send
 
-        printf("Sending Finish!!\n\n");
+        printf("Sending Finish!!\n"); 
+        printf("Throughput: %lf  bytes/sec\n\n",total_filesize/((double)(t_end-t_start)/(double)CLOCKS_PER_SEC));
         
+        fclose(fp);
         close(sockfd);
         close(new_sockfd);
 
@@ -275,11 +277,11 @@ int function(char *argv[]){
 
             }
 
-        }
+        }//end while
         printf("Receivinging Finish!!\n\n");
-        
-        close(sockfd);
+
         fclose(fp);
+        close(sockfd);
 
         return 0;
     }
@@ -304,7 +306,7 @@ int function(char *argv[]){
             printf("lstat() failed\n");
             exit(1);
         }
-        printf("The file size is %lu  bytes\n",file_state.st_size);
+        printf("Total file size is %lu  bytes\n",file_state.st_size);
         total_filesize = file_state.st_size;
         fivepercent_filesize = total_filesize / 20;
 
@@ -316,12 +318,12 @@ int function(char *argv[]){
         }
 
         //binding
-        printf("binding...\n");
         n = bind(sockfd,(struct sockaddr *)&my_addr,sizeof(struct sockaddr));
         if(n < 0){
             printf("Binding Error\n");
             exit(1);
         }
+        printf("Binding Success\n");
     
         //accept check message
         bzero(buffer,buffer_size);
@@ -331,7 +333,7 @@ int function(char *argv[]){
             printf("recvfrom Error\n");
             exit(1);
         }
-        printf("Client is ready to receive\n");
+        printf("Client is ready to receive data\n\n");
 
         //Send file size first
         n = sendto(sockfd,&total_filesize,sizeof(double),0,(struct sockaddr *)&client_addr,sizeof(client_addr));
@@ -339,20 +341,18 @@ int function(char *argv[]){
             printf("Send file size failed\n");
             exit(1);
         }
-        printf("send file size success\n");
 
         int len = 0, send_id = 0, recv_id = 0;
         buffer_size = 1;
         //start to send
         t_start=clock();
         while(1){
-            if(feof(fp) || percent >= 100)
+            if(feof(fp) || percent > 100)
                 break;    
     
             PackInfo pack_info;
             if(send_id == recv_id){
                 send_id++;
-                bzero(buffer,buffer_size);
                 
                 //read file
                 len = fread(SendData.buf,sizeof(char),BUFFERSIZE,fp);
@@ -373,7 +373,6 @@ int function(char *argv[]){
                     printf("recvfrom() Error\n");
                     break;
                 }
-                //printf("client has send check\n");
                 recv_id = pack_info.id;
 
                 if(send_id == recv_id){
@@ -411,18 +410,20 @@ int function(char *argv[]){
                         percent+=5;
                     }
                 }
-            
             }
 
         }//end while loop
         t_end = clock();
 
         printf("Sending Finish!!!\n");
+        printf("Throughput: %lf  bytes/sec\n\n",total_filesize/((double)(t_end-t_start)/(double)CLOCKS_PER_SEC));
 
 
-
+        fclose(fp);
         close(sockfd);
         close(new_sockfd);
+
+        return 0;
     }
     /*---------------------upd recv-----------------------*/
     else if(strcmp(argv[1],"udp")==0 && strcmp(argv[2],"recv")==0){
@@ -446,7 +447,6 @@ int function(char *argv[]){
             printf("File open fiailed\n");
             exit(1);
         }
-        printf("Open file success\n");
 
         bzero(buffer,buffer_size);
         strcpy(buffer,"client is ready to receive data\n");
@@ -463,9 +463,7 @@ int function(char *argv[]){
             printf("recv file size Error\n");
             exit(1);
         }
-        printf("recv file size success\n");
-        printf("Total File Size: %.2lf\n\n",total_filesize);
-
+        printf("Total File Size: %.2lf  bytes\n\n",total_filesize);
 
         socklen_t my_addr_size = sizeof(my_addr);
         int id = 1;
@@ -493,12 +491,7 @@ int function(char *argv[]){
                     //printf("Send check message success\n");
 
                     //write file
-                    fwrite(RecvData.buf,sizeof(char),RecvData.head.buf_size,fp);//<RecvData.head.buf_size);
-                    /*{
-                        printf("Write into file failed\n");
-                        break;
-                    }*/
-                    //printf("Write into file success\n");
+                    fwrite(RecvData.buf,sizeof(char),RecvData.head.buf_size,fp);
                 
                     //calculate
                     count+=RecvData.head.buf_size;
@@ -521,27 +514,16 @@ int function(char *argv[]){
                     }
                     //printf("Send check message success\n");
                 
-               /*     if(RecvData.head.id == id){
-                        count+=BUFFERSIZE;
-                        if((count*100 > total_filesize*percent) && percent<=100){
-                            t=time(NULL);
-                            printf("Send: %4d%%  %s\n", percent, ctime(&t));
-                            percent+=5;
-                        }
-                    }*/
                 }
             }
         
-
-
-
-        
-        
-        }
+        }//end while 
+        printf("Receiving Finish!!!\n");
             
-
+        fclose(fp);
         close(sockfd);
 
+        return 0;
     }
 
     return 0;
