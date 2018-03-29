@@ -343,6 +343,7 @@ int function(char *argv[]){
         }
 
         int len = 0, send_id = 0, recv_id = 0;
+        int send_packet = 0, loss_packet = 0;
         buffer_size = 1;
         //start to send
         t_start=clock();
@@ -361,6 +362,7 @@ int function(char *argv[]){
 
                 //send data
                 n = sendto(sockfd,(char *)&SendData,sizeof(SendData),0,(struct sockaddr *)&client_addr,sizeof(client_addr));
+                send_packet++;
                 if(n < 0){
                     printf("Send data failed\n");
                     break;
@@ -389,6 +391,8 @@ int function(char *argv[]){
             else{
                 //send_id != recv_id, resend
                 n = sendto(sockfd,(char *)&SendData,sizeof(SendData),0,(struct sockaddr *)&client_addr,sizeof(client_addr));
+                loss_packet++;
+                send_packet++;
                 if(n < 0){
                     printf("Send data failed\n");
                     break;
@@ -415,9 +419,11 @@ int function(char *argv[]){
         }//end while loop
         t_end = clock();
 
+        int packet_loss_rate=0;
+        packet_loss_rate = loss_packet*100/send_packet;
         printf("Sending Finish!!!\n");
-        printf("Throughput: %lf  bytes/sec\n\n",total_filesize/((double)(t_end-t_start)/(double)CLOCKS_PER_SEC));
-
+        printf("Throughput: %lf  bytes/sec\n",total_filesize/((double)(t_end-t_start)/(double)CLOCKS_PER_SEC));
+        printf("Packet Loss Rate:  %4d %%\n\n",packet_loss_rate);
 
         fclose(fp);
         close(sockfd);
